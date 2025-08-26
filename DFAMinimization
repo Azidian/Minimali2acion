@@ -1,0 +1,155 @@
+import java.util.*;
+
+public class DFAMinimization {
+    
+    static class DFA {
+        int numStates;
+        List<Character> alphabet;
+        Set<Integer> finalStates;
+        int[][] transitions;  // transitions[state][symbol_index] = next_state
+        
+        public DFA(int numStates, List<Character> alphabet, Set<Integer> finalStates, int[][] transitions) {
+            this.numStates = numStates;
+            this.alphabet = alphabet;
+            this.finalStates = finalStates;
+            this.transitions = transitions;
+        }
+    }
+    
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        
+        int cases = scanner.nextInt();
+        
+        for (int c = 0; c < cases; c++) {
+            // Leer número de estados
+            int numStates = scanner.nextInt();
+            
+            // Leer alfabeto
+            scanner.nextLine(); // consumir nueva línea
+            String[] alphabetStr = scanner.nextLine().split(" ");
+            List<Character> alphabet = new ArrayList<>();
+            for (String s : alphabetStr) {
+                alphabet.add(s.charAt(0));
+            }
+            
+            // Leer estados finales
+            String[] finalStatesStr = scanner.nextLine().split(" ");
+            Set<Integer> finalStates = new HashSet<>();
+            for (String s : finalStatesStr) {
+                finalStates.add(Integer.parseInt(s));
+            }
+            
+            // Leer tabla de transiciones
+            int[][] transitions = new int[numStates][alphabet.size()];
+            for (int i = 0; i < numStates; i++) {
+                String[] transitionRow = scanner.nextLine().split(" ");
+                for (int j = 0; j < alphabet.size(); j++) {
+                    transitions[i][j] = Integer.parseInt(transitionRow[j]);
+                }
+            }
+            
+            DFA dfa = new DFA(numStates, alphabet, finalStates, transitions);
+            List<Pair> equivalentStates = findEquivalentStates(dfa);
+            
+            // Imprimir resultado
+            StringBuilder result = new StringBuilder();
+            for (Pair pair : equivalentStates) {
+                if (result.length() > 0) {
+                    result.append(" ");
+                }
+                result.append("(").append(pair.first).append(", ").append(pair.second).append(")");
+            }
+            System.out.println(result.toString());
+        }
+        
+        scanner.close();
+    }
+    
+    /**
+     * Encuentra estados equivalentes usando el algoritmo de particionamiento iterativo
+     * basado en el algoritmo de minimización de Kozen
+     */
+    public static List<Pair> findEquivalentStates(DFA dfa) {
+        int n = dfa.numStates;
+        
+        // Tabla para marcar pares de estados distinguibles
+        boolean[][] distinguishable = new boolean[n][n];
+        
+        // Paso 1: Marcar pares donde uno es final y otro no
+        for (int p = 0; p < n; p++) {
+            for (int q = p + 1; q < n; q++) {
+                boolean pIsFinal = dfa.finalStates.contains(p);
+                boolean qIsFinal = dfa.finalStates.contains(q);
+                if (pIsFinal != qIsFinal) {
+                    distinguishable[p][q] = true;
+                    distinguishable[q][p] = true;
+                }
+            }
+        }
+        
+        // Paso 2: Iterar hasta que no haya cambios
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            
+            for (int p = 0; p < n; p++) {
+                for (int q = p + 1; q < n; q++) {
+                    // Si ya está marcado como distinguible, continuar
+                    if (distinguishable[p][q]) {
+                        continue;
+                    }
+                    
+                    // Verificar si existe un símbolo que los distingue
+                    for (int symbolIdx = 0; symbolIdx < dfa.alphabet.size(); symbolIdx++) {
+                        int nextP = dfa.transitions[p][symbolIdx];
+                        int nextQ = dfa.transitions[q][symbolIdx];
+                        
+                        // Si los estados siguientes son distinguibles, entonces p y q también lo son
+                        if (nextP != nextQ && distinguishable[Math.min(nextP, nextQ)][Math.max(nextP, nextQ)]) {
+                            distinguishable[p][q] = true;
+                            distinguishable[q][p] = true;
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Paso 3: Recopilar pares equivalentes (no distinguibles)
+        List<Pair> equivalentPairs = new ArrayList<>();
+        for (int p = 0; p < n; p++) {
+            for (int q = p + 1; q < n; q++) {
+                if (!distinguishable[p][q]) {
+                    equivalentPairs.add(new Pair(p, q));
+                }
+            }
+        }
+        
+        // Ordenar lexicográficamente
+        equivalentPairs.sort((a, b) -> {
+            if (a.first != b.first) {
+                return Integer.compare(a.first, b.first);
+            }
+            return Integer.compare(a.second, b.second);
+        });
+        
+        return equivalentPairs;
+    }
+    
+    static class Pair {
+        int first;
+        int second;
+        
+        public Pair(int first, int second) {
+            this.first = first;
+            this.second = second;
+        }
+        
+        @Override
+        public String toString() {
+            return "(" + first + ", " + second + ")";
+        }
+    }
+}
