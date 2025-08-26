@@ -1,8 +1,8 @@
 # DFA Minimization Algorithm Implementation
 
 ## Student Information
-- **Student's Full Name:** [Tu nombre completo aquí]
-- **Student's Class Number:** [Tu número de clase aquí]
+- Isabella Cadavid Posada 
+- Wendy Vanessa Atehortua Chaverra
 
 ## System Information
 - **Operating System:** Windows 11 / macOS / Ubuntu 20.04 (especifica el tuyo)
